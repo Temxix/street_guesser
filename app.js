@@ -29,6 +29,8 @@ const statsCard = document.getElementById('stats-card');
 const streetsListCard = document.getElementById('streets-list-card');
 const streetsList = document.getElementById('streets-list');
 const presetBtns = document.querySelectorAll('.btn-preset');
+const cityInput = document.getElementById('city-input');
+const searchBtn = document.getElementById('search-btn');
 const drawModeBtn = document.getElementById('draw-mode-btn');
 const guessInput = document.getElementById('guess-input');
 const guessBtn = document.getElementById('guess-btn');
@@ -160,6 +162,59 @@ function normalizeName(name) {
     // Remove extra whitespace
     return clean.replace(/\s+/g, ' ').trim();
 }
+
+// Calculate Levenshtein distance between two strings
+function levDistance(a, b) {
+    const distanceMatrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+    for (let i = 0; i <= a.length; i += 1) distanceMatrix[0][i] = i;
+    for (let j = 0; j <= b.length; j += 1) distanceMatrix[j][0] = j;
+    for (let j = 1; j <= b.length; j += 1) {
+        for (let i = 1; i <= a.length; i += 1) {
+            const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+            distanceMatrix[j][i] = Math.min(
+                distanceMatrix[j][i - 1] + 1, // deletion
+                distanceMatrix[j - 1][i] + 1, // insertion
+                distanceMatrix[j - 1][i - 1] + indicator // substitution
+            );
+        }
+    }
+    return distanceMatrix[b.length][a.length];
+}
+
+// Check if guess matches target (supporting partial matches and up to 2 typos)
+function isFuzzyMatch(guess, target) {
+    if (!guess || !target) return false;
+    
+    // If guess is very short, require exact match to avoid false positives
+    if (guess.length < 3) {
+        return guess === target;
+    }
+    
+    // 1. Direct substring match (incomplete/partial input, e.g., "ленин" in "ленина")
+    if (target.includes(guess) || guess.includes(target)) {
+        return true;
+    }
+    
+    // 2. Levenshtein distance on the whole string (up to 2 errors)
+    if (levDistance(guess, target) <= 2) {
+        return true;
+    }
+    
+    // 3. Levenshtein distance on substrings of target (incomplete input + up to 2 errors)
+    // Scan all substrings of target of length similar to guess length
+    if (guess.length >= 4) {
+        const subLen = guess.length;
+        for (let i = 0; i <= target.length - subLen; i++) {
+            const sub = target.substring(i, i + subLen);
+            if (levDistance(guess, sub) <= 2) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
 
 // Check if a point is inside a polygon (Ray-Casting Algorithm)
 function isPointInPolygon(point, polygonCoords) {
@@ -536,7 +591,20 @@ function checkGuess() {
     let matchedStreet = null;
     for (let key in streetData) {
         const street = streetData[key];
-        if (key === normGuess || street.alternativeNorms.has(normGuess)) {
+        let matches = false;
+        
+        if (isFuzzyMatch(normGuess, key)) {
+            matches = true;
+        } else {
+            for (let alt of street.alternativeNorms) {
+                if (isFuzzyMatch(normGuess, alt)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
+        
+        if (matches) {
             matchedStreet = street;
             break;
         }
@@ -770,6 +838,21 @@ function setupEvents() {
                 fetchStreetsForCity(query);
             }
         });
+    });
+
+    searchBtn.addEventListener('click', () => {
+        const val = cityInput.value.trim();
+        if (val) {
+            fetchStreetsForCity(val);
+        } else {
+            showToast('Please type a city name!', 'error');
+        }
+    });
+    
+    cityInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            searchBtn.click();
+        }
     });
     
     drawModeBtn.addEventListener('click', () => {
