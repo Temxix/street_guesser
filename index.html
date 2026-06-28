@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street Guesser — Map Trivia Game</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle Stats Panel">📊 Info</button>
+
+    <div id="app-container">
+        
+        <!-- Sidebar Panel -->
+        <aside id="sidebar">
+            <div class="panel-header">
+                <h1>🗺️ Street Guesser</h1>
+                <div class="panel-subtitle">Guess every street inside the boundaries!</div>
+            </div>
+
+            <div class="panel-body">
+                <!-- Game Settings Card (shown before start) -->
+                <div class="card" id="setup-card">
+                    <span class="card-title">Select Playable Area</span>
+                    
+                    <!-- Preset Regions Grid -->
+                    <div class="preset-grid">
+                        <button class="btn btn-preset" data-query="Saburtalo, Tbilisi">🇬🇪 Tbilisi Saburtalo</button>
+                        <button class="btn btn-preset" data-query="Vake, Tbilisi">🇬🇪 Tbilisi Vake</button>
+                        <button class="btn btn-preset" data-query="Campanar, Valencia">🇪🇸 Valencia Campanar</button>
+                        <button class="btn btn-preset" data-query="Irkutsk">🇷🇺 Irkutsk</button>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin: 6px 0;">— OR —</div>
+                    
+                    <!-- Option B: Custom Draw -->
+                    <button class="btn btn-secondary" id="draw-mode-btn">✏️ Draw Custom Area</button>
+                </div>
+
+                <!-- Active Game Controls Card (hidden by default) -->
+                <div class="card hidden" id="game-controls-card">
+                    <span class="card-title">Guess Street Name</span>
+                    <div class="input-group">
+                        <input type="text" id="guess-input" placeholder="Type street name..." aria-label="Street Guess" disabled>
+                        <button class="btn" id="guess-btn" disabled>Submit</button>
+                    </div>
+                    <button class="btn btn-danger" id="giveup-btn">🏳️ Give Up</button>
+                </div>
+
+                <!-- Active Game Stats (hidden by default) -->
+                <div class="card hidden" id="stats-card">
+                    <span class="card-title">Game Progress</span>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="panel-subtitle">Guessed</span>
+                            <div class="stat-val" id="stat-score">0 / 0</div>
+                        </div>
+                        <div class="stat-box">
+                            <span class="panel-subtitle">Streak 🔥</span>
+                            <div class="stat-val" id="stat-streak">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <span class="panel-subtitle">Time</span>
+                            <div class="stat-val" id="stat-timer">00:00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guessed Streets List (hidden by default) -->
+                <div class="streets-list-container card hidden" id="streets-list-card">
+                    <span class="card-title">Discovered Streets</span>
+                    <ul class="streets-list" id="streets-list">
+                        <!-- Guessed streets injected here -->
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Map container -->
+        <main id="map-container">
+            <!-- Loading Overlay -->
+            <div class="overlay hidden" id="loading-overlay">
+                <span class="loader"></span>
+                <h3 id="loading-message">Fetching street data from OpenStreetMap...</h3>
+            </div>
+
+            <!-- Start Intro Screen -->
+            <div id="start-screen">
+                <h2 class="start-title">Street Guesser</h2>
+                <p class="instruction-text">
+                    Test your local knowledge! Search for a city, or draw custom boundaries directly on the map.
+                    We will extract all street names in that area, and hide their labels. 
+                    Your job is to guess them all!
+                </p>
+                <button class="btn" id="start-game-btn">Get Started</button>
+            </div>
+
+            <div id="map"></div>
+        </main>
+    </div>
+
+    <!-- Trophy Modal Overlay -->
+    <div id="trophy-modal" class="overlay hidden">
+        <div class="card trophy-card">
+            <img src="trophy.png" alt="Trophy Badge" class="trophy-badge-img">
+            <h2 class="trophy-title">Street Explorer Badge! 🏆</h2>
+            <p class="trophy-desc">Awesome! You guessed <span id="trophy-percentage">0</span>% of the streets (<span id="trophy-count">0</span>/<span id="trophy-total">0</span>) in this region!</p>
+            <button class="btn" id="close-trophy-btn">Awesome!</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <!-- Leaflet Draw JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <!-- Game App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
